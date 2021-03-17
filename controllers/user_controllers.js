@@ -1,29 +1,37 @@
 const { User } = require('../models')
+const { hashPass } = require('../helpers/bcrypt')
 
 class UserController {
   static find(req, res, next) {
-    User.findAll()
+    User.findAll({
+      attributes: { exclude: ['password'] }
+    })
       .then(users => {
         res.status(200).json(users)
       })
-      .catch(err)
+      .catch(err => {
+        next(err)
+      })
   }
 
   static findById(req, res, next) {
     const id = +req.params.id
     
-    User.findByPk(id)
+    User.findByPk(id, {
+      attributes: { exclude: ['password'] }
+    })
     .then(user => {
       res.status(200).json(user)
     })
-    .catch(err)
+    .catch(err => {
+      next(err)
+    })
   }
 
   static register(req, res, next) {
-    const { username, email, password, role } = req.body
+    const { username, password, role } = req.body
     const user = {
       username,
-      email,
       password,
       role
     }
@@ -32,16 +40,17 @@ class UserController {
     .then(user => {
       res.status(201).json(user)
     })
-    .catch(err)
+    .catch(err => {
+      next(err)
+    })
   }
 
   static update(req, res, next) {
     const id = +req.params.id
-    const { username, email, password, role } = req.body
+    const { username, password, role } = req.body
     const user = {
       username,
-      email,
-      password,
+      password: hashPass(password),
       role
     }
 
@@ -51,14 +60,21 @@ class UserController {
       }
     })
     .then(user => {
+      return User.findByPk(id, {
+        attributes: { exclude: ['password'] }
+      })
+    })
+    .then(user => {
       res.status(200).json(user)
     })
-    .catch(err)
+    .catch(err => {
+      next(err)
+    })
   }
 
   static remove(req, res, next) {
     const id = +req.params.id
-    User.destroy(user, {
+    User.destroy({
       where: {
         id
       }
@@ -66,7 +82,9 @@ class UserController {
     .then(user => {
       res.status(200).json(user)
     })
-    .catch(err)
+    .catch(err => {
+      next(err)
+    })
   }
 }
 
