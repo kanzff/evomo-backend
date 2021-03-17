@@ -1,21 +1,14 @@
 function errorHandler(err, req, res, next) {
   if (err) {
-      // console.log('ini dari handler')
-      console.log(err)
-      // console.log('ini akhir dari hanlder')
       switch (err.name) {
           case 'SequelizeValidationError':
-              // console.log(err.errors)
               let errMes = err.errors.map(el => {
-                  // console.log(el.message, 'ini message dri valid')
                   return el.message
               })
               res.status(400).json({message: errMes})
               break
           case 'SequelizeUniqueConstraintError':
-              // console.log(err.errors)
               let errMes2 = err.errors.map(el => {
-                  // console.log(el.message, 'ini message dri valid')
                   return el.message
               })
               res.status(400).json({message: errMes2})

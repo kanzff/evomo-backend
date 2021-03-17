@@ -1,5 +1,6 @@
 const { User } = require('../models')
-const { hashPass } = require('../helpers/bcrypt')
+const { hashPass, comparePass } = require('../helpers/bcrypt')
+const { getToken } = require('../helpers/jwt')
 
 class UserController {
   static find(req, res, next) {
@@ -45,6 +46,45 @@ class UserController {
     })
   }
 
+  static async login(req, res, next) {
+    try {
+        const { username, password } = req.body
+
+        const user = await User.findOne({
+            where: {
+                username
+            }
+        })
+        if (!user) {
+            next({name: 'Invalid Username / Password'})
+
+        } else {
+            const { id, username, role } = user
+            const isValidPass = comparePass(password, user.password)
+            if (isValidPass) {
+                const payload = {
+                    id: user.id,
+                    username: user.username,
+                    role: user.role
+                }
+                const access_token = getToken(payload)
+                return res.status(200).json({ 
+                  access_token,
+                  data: {
+                    id,
+                    username,
+                    role
+                  } 
+                })
+            } else {
+                next({name: 'Invalid Username / Password'})
+            }
+        }
+    } catch (err) {
+        next(err)
+    }
+  }
+
   static update(req, res, next) {
     const id = +req.params.id
     const { username, password, role } = req.body
@@ -80,7 +120,7 @@ class UserController {
       }
     })
     .then(user => {
-      res.status(200).json(user)
+      res.status(200).json("User successfully deleted")
     })
     .catch(err => {
       next(err)
